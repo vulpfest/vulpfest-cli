@@ -26,7 +26,7 @@ pip install vulpfest            # Cyber Web Scanner + Scam Check (light)
 pip install "vulpfest[all]"     # adds LeadScout and GMaps Scout
 ```
 
-Until the package is on PyPI, install it straight from GitHub:
+Or install the latest code straight from GitHub:
 
 ```bash
 pip install "vulpfest[all] @ git+https://github.com/vulpfest/vulpfest-cli"
