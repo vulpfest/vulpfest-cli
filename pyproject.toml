@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vulpfest"
+version = "1.0.0"
+description = "Vulpfest Lab tools in one place: a web security scanner and a scam-link checker, from your terminal."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Febri Osht (Vulpfest)" }]
+keywords = ["security", "scanner", "anti-scam", "phishing", "vulpfest", "osint"]
+dependencies = [
+  "requests>=2.32",
+  "beautifulsoup4>=4.12",
+]
+
+[project.optional-dependencies]
+leads = ["ddgs>=6.0", "pandas>=2.0"]
+gmaps = ["selenium>=4.0", "webdriver-manager>=4.0", "pandas>=2.0", "xlsxwriter>=3.0", "openpyxl>=3.0"]
+all = ["ddgs>=6.0", "pandas>=2.0", "selenium>=4.0", "webdriver-manager>=4.0", "xlsxwriter>=3.0", "openpyxl>=3.0"]
+
+[project.urls]
+Homepage = "https://lab.vulpfest.com"
+Source = "https://github.com/vulpfest/vulpfest-cli"
+
+[project.scripts]
+vulpfest = "vulpfest.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vulpfest"]
