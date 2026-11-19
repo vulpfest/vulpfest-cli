@@ -7,6 +7,8 @@
 
 # vulpfest
 
+[![PyPI](https://img.shields.io/pypi/v/vulpfest)](https://pypi.org/project/vulpfest/)
+
 All four free tools from [Vulpfest Lab](https://lab.vulpfest.com) in one terminal command. Type `vulpfest`,
 pick a tool from the menu, and run it — on Windows, macOS or Linux.
 

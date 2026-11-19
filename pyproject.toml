@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vulpfest"
-version = "1.0.1"
+version = "1.0.2"
 description = "Vulpfest Lab tools in one place: a web security scanner and a scam-link checker, from your terminal."
 readme = "README.md"
 requires-python = ">=3.9"
