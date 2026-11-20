@@ -6,3 +6,7 @@ dist/
 .venv/
 venv/
 .pytest_cache/
+
+# Hasil LeadScout / GMaps Scout jangan pernah di-commit
+*.csv
+*.xlsx
