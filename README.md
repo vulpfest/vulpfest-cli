@@ -10,7 +10,7 @@
 [![PyPI](https://img.shields.io/pypi/v/vulpfest)](https://pypi.org/project/vulpfest/)
 
 All four free tools from [Vulpfest Lab](https://lab.vulpfest.com) in one terminal command. Type `vulpfest`,
-pick a tool from the menu, and run it — on Windows, macOS or Linux.
+pick a tool from the menu, and run it on Windows, macOS or Linux.
 
 | # | Tool | Command | What it does |
 |---|---|---|---|
@@ -28,18 +28,26 @@ pip install vulpfest            # Cyber Web Scanner + Scam Check (light)
 pip install "vulpfest[all]"     # adds LeadScout and GMaps Scout
 ```
 
-Or install the latest code straight from GitHub:
-
-```bash
-pip install "vulpfest[all] @ git+https://github.com/vulpfest/vulpfest-cli"
-```
+Prefer to keep it separate from your other Python packages? Use [pipx](https://pipx.pypa.io):
+`pipx install "vulpfest[all]"`. To try the newest code from GitHub:
+`pip install "vulpfest[all] @ git+https://github.com/vulpfest/vulpfest-cli"`.
 
 GMaps Scout drives a real browser, so it also needs **Google Chrome** installed.
 
-## Use
+## The menu
+
+Type `vulpfest` and the menu opens:
+
+- move with the **arrow keys** and press **Enter**, or press **1-4** to pick a tool directly;
+- press **L** for the official Vulpfest links, **Q** to quit;
+- when a tool finishes, press **Enter** to go back to the menu; **Ctrl+C** stops a running tool and also returns to the menu;
+- the menu is in English, or in Indonesian when your system language is Indonesian. Switch any time with
+  `vulpfest --lang id` or `vulpfest --lang en`.
+
+## Commands
 
 ```bash
-vulpfest                                    # menu: pick a tool by number
+vulpfest                                    # open the menu
 vulpfest scan example.com                   # scan your own website
 vulpfest scan example.com --repo .          # site + project folder in one report
 vulpfest check bca-co-id.xyz                # check a suspicious link
@@ -49,9 +57,63 @@ vulpfest <tool> --help                      # all options of a tool
 vulpfest links                              # official Vulpfest website and social media
 vulpfest doctor                             # check Python, packages, Chrome and internet
 vulpfest update                             # update to the latest version
-vulpfest config out "D:\Data"               # change the results folder (default: Documents\Vulpfest)
-vulpfest completion powershell              # Tab completion (also bash and zsh)
+vulpfest config                             # show the results folder
+vulpfest completion powershell              # Tab completion script (also bash and zsh)
 ```
+
+Mistype a command and `vulpfest` suggests the closest one (`vulpfest chek` → *Did you mean: vulpfest check?*).
+
+## Where results are saved
+
+A plain file name such as `places.xlsx` is saved in your **results folder**, whatever folder your terminal is in.
+By default that is `Documents/Vulpfest` in your home folder. A path that includes a folder
+(for example `D:\Data\places.xlsx`) is used exactly as given.
+
+```bash
+vulpfest config                             # show the current results folder
+vulpfest config out "D:\Data"               # change it
+```
+
+## Tab completion
+
+Type `vulpfest d`, press **Tab**, and it becomes `vulpfest doctor`. To turn it on, add one line to your shell profile:
+
+| Shell | Add this line | To |
+|---|---|---|
+| PowerShell | `vulpfest completion powershell \| Out-String \| Invoke-Expression` | `$PROFILE` |
+| bash | `eval "$(vulpfest completion bash)"` | `~/.bashrc` |
+| zsh | `eval "$(vulpfest completion zsh)"` | `~/.zshrc` |
+
+Then open a new terminal.
+
+## Settings
+
+| Variable | Effect |
+|---|---|
+| `VULPFEST_LANG=en` or `id` | menu language |
+| `VULPFEST_OUT=<folder>` | results folder for this session (overrides `vulpfest config out`) |
+| `NO_COLOR=1` | no colours |
+| `VULPFEST_NO_ANIM=1` | skip the opening animation |
+| `VULPFEST_SIMPLE_MENU=1` | type a number instead of using the arrow keys |
+| `VULPFEST_NO_UPDATE_CHECK=1` | never check for new versions |
+| `VULPFEST_DEBUG=1` | show full error details |
+
+## Privacy
+
+- `vulpfest` does not collect usage data or send anything about you.
+- Once a day it asks pypi.org for the latest version number, so it can tell you when an update is available.
+  Turn this off with `VULPFEST_NO_UPDATE_CHECK=1`.
+- The tools contact only what their checks need: the site or link you give them and public lookup services.
+- If something breaks, it shows a link for a GitHub issue. Nothing is sent unless you open that link and submit it
+  yourself, and your user name is removed from file paths in the report.
+- Your settings are stored on your own computer, in the `.vulpfest` folder in your home folder.
+
+## Troubleshooting
+
+Run `vulpfest doctor`. It checks Python, the packages each tool needs, Google Chrome, your internet connection,
+the results folder and your terminal, and tells you how to fix anything that is missing.
+
+## Sources
 
 Each tool behaves exactly like its standalone version; the source of each one lives in its own repository:
 [Cyber-Web-Scanner](https://github.com/FebriOsht/Cyber-Web-Scanner) ·
@@ -61,7 +123,7 @@ Each tool behaves exactly like its standalone version; the source of each one li
 
 ## Responsible use
 
-Scan only websites you own or are authorized to test. Collect only public data, respect each site''s terms,
+Scan only websites you own or are authorized to test. Collect only public data, respect each site's terms,
 and follow the data-protection law that applies to you.
 
 ## Security
