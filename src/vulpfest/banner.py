@@ -50,7 +50,8 @@ def parts(available, lang="en"):
         "",
         c(t["examples"], "bold") + c("  vulpfest scan example.com", "cyan"),
         " " * (len(t["examples"]) + 2) + c("vulpfest check bca-co-id.xyz", "cyan"),
-        c(t["help"], "bold") + c(" vulpfest <tool> --help", "cyan"),
+        c(t["help"], "bold") + c(" vulpfest <tool> --help  ·  vulpfest doctor", "cyan"),
+        c(t["menu_links"], "gray"),
         c(t["switch"], "gray"),
     ]
     return [gradient(line) for line in FOX], info

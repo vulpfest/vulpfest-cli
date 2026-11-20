@@ -7,6 +7,7 @@
   vulpfest leads --roles ... --industries ...   LeadScout
   vulpfest gmaps "coffee shop jakarta"          GMaps Scout
 """
+import difflib
 import importlib.util
 import os
 import re
@@ -18,6 +19,14 @@ from pathlib import Path
 from . import __version__
 from . import ui
 from .banner import render, render_rows
+from .links import render_links
+from .completion import completion
+from .config import out_dir, resolve_out, set_out_dir
+from .doctor import doctor
+from .errors import report
+from .picker import pick
+from .ui import c
+from .update import check_in_background, run_update
 from .i18n import TEXT, detect_lang
 
 TOOLS_DIR = Path(__file__).resolve().parent / "tools"
@@ -52,6 +61,10 @@ def run_tool(key, args, lang="en"):
         if key == "gmaps":
             print(t["needs_chrome"], file=sys.stderr)
         return 2
+    args = list(args)
+    if "--out" in args and args.index("--out") + 1 < len(args):
+        i = args.index("--out")
+        args[i + 1] = resolve_out(args[i + 1])
     tool_dir = TOOLS_DIR / TOOLS[key]
     before = set(sys.modules)
     sys.path.insert(0, str(tool_dir))
@@ -156,33 +169,40 @@ QUIT = ("q", "quit", "exit", "keluar")
 def interactive(lang):
     t = TEXT[lang]
     first = True
+    latest = check_in_background()
     while True:
         show_menu(lang, animate=first)
+        if first and latest:
+            print("\n" + c(t["update_available"].format(latest, __version__), "yellow"))
         first = False
         try:
-            choice = input("\n" + t["choose"]).strip().lower()
+            key = pick(lang)
         except (EOFError, KeyboardInterrupt):
             print()
             return 0
-        if not choice or choice in QUIT:
+        if key == "quit":
             return 0
-        key = ORDER[int(choice) - 1] if choice.isdigit() and 1 <= int(choice) <= 4 else choice
-        if key not in TOOLS:
+        if key not in TOOLS and key != "links":
             print(t["unknown_choice"] + "\n")
             continue
-        try:
-            args = _ask_args(key, t)
-        except (EOFError, KeyboardInterrupt):
-            print("\n")
-            continue
-        if args is None:
+        if key == "links":
+            print(render_links(lang))
+        else:
+            try:
+                args = _ask_args(key, t)
+            except (EOFError, KeyboardInterrupt):
+                print("\n")
+                continue
+            if args is None:
+                print()
+                continue
             print()
-            continue
-        print()
-        try:
-            run_tool(key, args, lang)
-        except KeyboardInterrupt:
-            print("\n" + t["stopped"])
+            try:
+                run_tool(key, args, lang)
+            except KeyboardInterrupt:
+                print("\n" + t["stopped"])
+            except Exception as exc:
+                report(exc, key, t)
         try:
             again = input("\n" + t["again"]).strip().lower()
         except (EOFError, KeyboardInterrupt):
@@ -192,7 +212,16 @@ def interactive(lang):
             return 0
         print()
 
-def main(argv=None):
+
+def _config(args, t):
+    if len(args) >= 2 and args[0] == "out":
+        print(t["config_set"].format(set_out_dir(args[1])))
+        return 0
+    print(t["saved_dir"].format(out_dir()))
+    print('  vulpfest config out "<folder>"')
+    return 0
+
+def _main(argv=None):
     _utf8()
     argv = list(sys.argv[1:] if argv is None else argv)
     lang = detect_lang()
@@ -211,11 +240,38 @@ def main(argv=None):
     if head in ("-v", "--version", "version"):
         print(f"vulpfest {__version__}")
         return 0
+    if head == "doctor":
+        return doctor(lang)
+    if head == "update":
+        return run_update(t)
+    if head == "config":
+        return _config(argv[1:], t)
+    if head == "completion":
+        return completion(argv[1:], t)
+    if head in ("links", "social", "sosmed", "about"):
+        print(render_links(lang))
+        return 0
     if head not in TOOLS:
-        print(t["unknown_tool"].format(argv[0]) + "\n")
+        print(t["unknown_tool"].format(argv[0]))
+        names = list(TOOLS) + ["links", "doctor", "update", "config", "completion", "menu"]
+        guess = [n for n in names if n.startswith(head)] or difflib.get_close_matches(head, names, n=1)
+        if guess:
+            print(t["did_you_mean"].format(guess[0]))
+        print()
         print(render(available(), lang))
         return 2
     return run_tool(head, argv[1:], lang)
+
+
+def main(argv=None):
+    try:
+        return _main(argv)
+    except KeyboardInterrupt:
+        print()
+        return 130
+    except Exception as exc:
+        report(exc, "vulpfest", TEXT[detect_lang()])
+        return 1
 
 
 if __name__ == "__main__":

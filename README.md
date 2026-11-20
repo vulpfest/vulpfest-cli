@@ -46,6 +46,11 @@ vulpfest check bca-co-id.xyz                # check a suspicious link
 vulpfest leads --roles "software house" --industries "technology" --out leads.csv
 vulpfest gmaps "coffee shop in Bali" --limit 20 --out places.xlsx
 vulpfest <tool> --help                      # all options of a tool
+vulpfest links                              # official Vulpfest website and social media
+vulpfest doctor                             # check Python, packages, Chrome and internet
+vulpfest update                             # update to the latest version
+vulpfest config out "D:\Data"               # change the results folder (default: Documents\Vulpfest)
+vulpfest completion powershell              # Tab completion (also bash and zsh)
 ```
 
 Each tool behaves exactly like its standalone version; the source of each one lives in its own repository:
