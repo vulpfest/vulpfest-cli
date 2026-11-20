@@ -9,6 +9,8 @@
 """
 import importlib.util
 import os
+import re
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -79,14 +81,50 @@ def _animate_ok():
     return ui._ENABLED and not os.environ.get("VULPFEST_NO_ANIM")
 
 
+ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _animate_menu(lang):
+    """Animasi ~2 detik: logo dari atas ke bawah, VULPFEST huruf demi huruf, lalu teks di sampingnya."""
+    from .banner import FOX, _W, gradient, parts
+    _, info = parts(available(), lang)
+    rows = max(len(FOX), len(info))
+    size = shutil.get_terminal_size((80, 24))
+    if size.lines < rows + 2 or size.columns < _W + 3 + max(len(ANSI.sub("", x)) for x in info):
+        return False  # jendela terlalu kecil: pakai tampilan biasa
+    plain = list(FOX) + [" " * _W] * (rows - len(FOX))
+    out = sys.stdout
+    for i, line in enumerate(plain):
+        if i == len(FOX) - 1:  # tulisan V U L P F E S T, huruf demi huruf
+            buf = [" "] * len(line)
+            for j, ch in enumerate(line):
+                if ch != " ":
+                    buf[j] = ch
+                    out.write("\r" + gradient("".join(buf)))
+                    out.flush()
+                    time.sleep(0.05)
+            out.write("\n")
+        else:
+            out.write(gradient(line) + "\n")
+            out.flush()
+            time.sleep(0.035)
+    out.write(f"\033[{rows}A")  # kembali ke baris pertama, lalu tulis teks di samping logo
+    for i in range(rows):
+        right = info[i] if i < len(info) else ""
+        out.write(f"\r{gradient(plain[i])}   {right}\033[K\n")
+        out.flush()
+        time.sleep(0.045)
+    return True
+
+
 def show_menu(lang, animate=False):
-    rows = render_rows(available(), lang)
-    if animate and _animate_ok():
-        for row in rows:
-            print(row, flush=True)
-            time.sleep(0.03)
-    else:
-        print("\n".join(rows))
+    try:
+        if animate and _animate_ok() and _animate_menu(lang):
+            return
+    except KeyboardInterrupt:
+        print("\033[0m")
+        raise SystemExit(0)
+    print(render(available(), lang))
 
 
 def _ask_args(key, t):

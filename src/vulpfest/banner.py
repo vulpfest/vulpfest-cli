@@ -29,7 +29,7 @@ def gradient(line):
     return "".join(out)
 
 
-def render_rows(available, lang="en"):
+def parts(available, lang="en"):
     """available: kunci tool yang paket tambahannya sudah terpasang."""
     t = TEXT.get(lang, TEXT["en"])
     info = [
@@ -53,7 +53,11 @@ def render_rows(available, lang="en"):
         c(t["help"], "bold") + c(" vulpfest <tool> --help", "cyan"),
         c(t["switch"], "gray"),
     ]
-    fox = [gradient(line) for line in FOX]
+    return [gradient(line) for line in FOX], info
+
+
+def render_rows(available, lang="en"):
+    fox, info = parts(available, lang)
     rows = max(len(fox), len(info))
     return [f"{fox[i] if i < len(fox) else ' ' * _W}   {info[i] if i < len(info) else ''}" for i in range(rows)]
 
