@@ -29,7 +29,7 @@ def gradient(line):
     return "".join(out)
 
 
-def render(available, lang="en"):
+def render_rows(available, lang="en"):
     """available: kunci tool yang paket tambahannya sudah terpasang."""
     t = TEXT.get(lang, TEXT["en"])
     info = [
@@ -55,6 +55,8 @@ def render(available, lang="en"):
     ]
     fox = [gradient(line) for line in FOX]
     rows = max(len(fox), len(info))
-    return "\n".join(
-        f"{fox[i] if i < len(fox) else ' ' * _W}   {info[i] if i < len(info) else ''}" for i in range(rows)
-    )
+    return [f"{fox[i] if i < len(fox) else ' ' * _W}   {info[i] if i < len(info) else ''}" for i in range(rows)]
+
+
+def render(available, lang="en"):
+    return "\n".join(render_rows(available, lang))

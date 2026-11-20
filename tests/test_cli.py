@@ -39,3 +39,19 @@ def test_unknown_tool_returns_2():
 def test_tool_help_uses_vulpfest_name(capsys):
     assert run_tool("check", ["--help"]) == 0
     assert "vulpfest check" in capsys.readouterr().out
+
+
+def test_menu_returns_after_a_tool(monkeypatch):
+    import vulpfest.__main__ as m
+    answers = iter(["2", "example.com/x.apk", "", "4", "coffee in Batam", "kafe.xlsx", "q"])
+    calls = []
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(answers))
+    monkeypatch.setattr(m, "run_tool", lambda key, args, lang="en": calls.append((key, args)) or 0)
+    assert m.interactive("en") == 0
+    assert calls == [("check", ["example.com/x.apk"]), ("gmaps", ["coffee in Batam", "--out", "kafe.xlsx"])]
+
+
+def test_empty_choice_quits(monkeypatch):
+    import vulpfest.__main__ as m
+    monkeypatch.setattr("builtins.input", lambda prompt="": "")
+    assert m.interactive("en") == 0

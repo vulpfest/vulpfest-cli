@@ -8,11 +8,14 @@
   vulpfest gmaps "coffee shop jakarta"          GMaps Scout
 """
 import importlib.util
+import os
 import sys
+import time
 from pathlib import Path
 
 from . import __version__
-from .banner import render
+from . import ui
+from .banner import render, render_rows
 from .i18n import TEXT, detect_lang
 
 TOOLS_DIR = Path(__file__).resolve().parent / "tools"
@@ -48,6 +51,7 @@ def run_tool(key, args, lang="en"):
             print(t["needs_chrome"], file=sys.stderr)
         return 2
     tool_dir = TOOLS_DIR / TOOLS[key]
+    before = set(sys.modules)
     sys.path.insert(0, str(tool_dir))
     sys.argv = [f"vulpfest {key}"] + list(args)
     spec = importlib.util.spec_from_file_location(f"vulpfest_{TOOLS[key]}_cli", tool_dir / "cli.py")
@@ -55,38 +59,100 @@ def run_tool(key, args, lang="en"):
     try:
         spec.loader.exec_module(module)
         rc = module.main()
+        return rc if isinstance(rc, int) else 0
     except SystemExit as e:
         if e.code is None:
             return 0
         return e.code if isinstance(e.code, int) else 1
-    return rc if isinstance(rc, int) else 0
+    finally:
+        # Bersihkan agar tool berikutnya di menu yang sama mulai dari keadaan bersih
+        try:
+            sys.path.remove(str(tool_dir))
+        except ValueError:
+            pass
+        for name in set(sys.modules) - before:
+            if str(getattr(sys.modules.get(name), "__file__", "") or "").startswith(str(TOOLS_DIR)):
+                sys.modules.pop(name, None)
+
+
+def _animate_ok():
+    return ui._ENABLED and not os.environ.get("VULPFEST_NO_ANIM")
+
+
+def show_menu(lang, animate=False):
+    rows = render_rows(available(), lang)
+    if animate and _animate_ok():
+        for row in rows:
+            print(row, flush=True)
+            time.sleep(0.03)
+    else:
+        print("\n".join(rows))
+
+
+def _ask_args(key, t):
+    """Tanya isian tool. None bila isian wajib kosong (kembali ke menu)."""
+    if key == "scan":
+        v = input(t["ask_site"]).strip()
+        return [v] if v else None
+    if key == "check":
+        v = input(t["ask_link"]).strip()
+        return [v] if v else None
+    if key == "leads":
+        roles = input(t["ask_roles"]).strip()
+        industries = input(t["ask_industries"]).strip()
+        if not roles or not industries:
+            return None
+        args = ["--roles", roles, "--industries", industries]
+    else:
+        query = input(t["ask_query"]).strip()
+        if not query:
+            return None
+        args = [query]
+    out = input(t["ask_out_" + key]).strip()
+    return args + (["--out", out] if out else [])
+
+
+QUIT = ("q", "quit", "exit", "keluar")
 
 
 def interactive(lang):
     t = TEXT[lang]
-    print(render(available(), lang))
-    try:
-        choice = input("\n" + t["choose"]).strip().lower()
-        if not choice:
+    first = True
+    while True:
+        show_menu(lang, animate=first)
+        first = False
+        try:
+            choice = input("\n" + t["choose"]).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return 0
+        if not choice or choice in QUIT:
             return 0
         key = ORDER[int(choice) - 1] if choice.isdigit() and 1 <= int(choice) <= 4 else choice
         if key not in TOOLS:
-            print(t["unknown_choice"])
-            return 2
-        if key == "scan":
-            args = [input(t["ask_site"]).strip()]
-        elif key == "check":
-            args = [input(t["ask_link"]).strip()]
-        elif key == "leads":
-            args = ["--roles", input(t["ask_roles"]).strip(), "--industries", input(t["ask_industries"]).strip()]
-        else:
-            args = [input(t["ask_query"]).strip()]
-    except (EOFError, KeyboardInterrupt):
+            print(t["unknown_choice"] + "\n")
+            continue
+        try:
+            args = _ask_args(key, t)
+        except (EOFError, KeyboardInterrupt):
+            print("\n")
+            continue
+        if args is None:
+            print()
+            continue
         print()
-        return 0
-    print()
-    return run_tool(key, args, lang)
-
+        try:
+            run_tool(key, args, lang)
+        except KeyboardInterrupt:
+            print("\n" + t["stopped"])
+        try:
+            again = input("\n" + t["again"]).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return 0
+        if again in QUIT:
+            return 0
+        print()
 
 def main(argv=None):
     _utf8()
